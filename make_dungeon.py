@@ -300,6 +300,26 @@ def get_actions(actions):
     act_str = act_str[:-1] # trim trailing newline
     return act_str
 
+def get_game_state_members(game_state):
+    template = "   {type} {name}{range}; // {description}\n"
+    template_multiline = "\n   /*  {description} */\n   {type} {name}{range};\n\n"
+    members_str = ""
+    for name, member in game_state:
+        member["name"] = name;
+        if "range" not in member:
+            member["range"] = ""
+        if "description" not in member:
+            member["description"] = "n/a"
+        if "\n" in member["description"]:
+            member["description"] = member["description"].replace("\n", "\n    *  ")
+            members_str += template_multiline.format(**member)
+        else:
+            members_str += template.format(**member)
+    
+    print(members_str)
+    
+    return members_str
+
 def bigdump(arr):
     out = ""
     for (i, entry) in enumerate(arr):
@@ -519,6 +539,19 @@ def get_travel(travel):
     out = out[:-1] # trim trailing newline
     return out
 
+def get_dungeon_prop_getter(game_state):
+    template = """
+    if (strcmp(prop_name, "{member_name}")) {{
+        return true;
+    }}
+    """
+    
+    getter = "";
+    for name, member in game_state:
+        if()
+        getter += template.format(member_name=name);
+    return getter;
+
 if __name__ == "__main__":
     with open(YAML_NAME, "r") as f:
         db = yaml.load(f)
@@ -556,7 +589,8 @@ if __name__ == "__main__":
         actions            = get_actions(db["actions"]),
         tkeys              = bigdump(tkey),
         travel             = get_travel(travel), 
-        ignore             = ignore
+        ignore             = ignore,
+        getter             = get_dungeon_prop_getter(db["game_state"])
     )
 
     # 0-origin index of birds's last song.  Bird should
@@ -580,6 +614,7 @@ if __name__ == "__main__":
         objects            = get_refs(db["objects"]),
         motions            = get_refs(db["motions"]),
         actions            = get_refs(db["actions"]),
+        game_state_members = get_game_state_members(db["game_state"]),
         state_definitions  = statedefines
     )
 

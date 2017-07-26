@@ -113,6 +113,178 @@
 #	%S = The letter 's' or nothing (if a previous %d value is exactly 1)
 #	%V = substitute program version string
 
+game_state: !!omap
+- lcg_a:
+    type: unsigned long
+- lcg_c:
+    type: unsigned long
+- lcg_m:
+    type: unsigned long
+- lcg_x:
+    type: unsigned long
+- abbnum:
+    type: long
+    description: How often to print long descriptions
+- bonus:
+    type: score_t
+    description: What kind of finishing bonus we are getting
+- chloc:
+    type: loc_t
+    description: pirate chest location
+- chloc2:
+    type: loc_t
+    description: pirate chest alternate location
+- clock1:
+    type: turn_t
+    description: \# turns from finding last treasure to close
+- clock2:
+    type: turn_t
+    description: \# turns from warning till blinding flash
+- clshnt:
+    type: bool
+    description: has player read the clue in the endgame?
+- closed:
+    type: bool
+    description: whether we're all the way closed
+- closng:
+    type: bool
+    description: whether it's closing time yet
+- conds:
+    type: long
+    description: min value for cond[loc] if loc has any hints
+- detail:
+    type: long
+    description: level of detail in descriptions
+- dflag:
+    type: long
+    description: |-
+            dflag controls the level of activation of dwarves:
+            0  No dwarf stuff yet (wait until reaches Hall Of Mists)
+            1  Reached Hall Of Mists, but hasn't met first dwarf
+            2  Met first dwarf, others start moving, no knives thrown yet
+            3  A knife has been thrown (first set always misses)
+            3+ Dwarves are mad (increases their accuracy)
+- dkill:
+    type: long
+    description: dwarves killed
+- dtotal:
+    type: long
+    description: total dwarves (including pirate)
+- foobar:
+    type: long
+    description: progress in saying "FEE FIE FOE FOO".
+- holdng:
+    type: long
+    description: number of objects being carried
+- igo:
+    type: long
+    description: \# uses of "go" instead of a direction
+- iwest:
+    type: long
+    description: \# times he's said "west" instead of "w"
+- knfloc:
+    type: long
+    description: knife location; 0 if none, -1 after caveat
+- limit:
+    type: turn_t
+    description: lifetime of lamp
+- lmwarn:
+    type: bool
+    description: has player been warned about lamp going dim?
+- panic:
+    type: bool
+    description: has player found out he's trapped?
+- loc:
+    type: loc_t
+    description: where player is now
+- newloc:
+    type: loc_t
+    description: where player is going
+- oldloc:
+    type: loc_t
+    description: where player was
+- oldlc2:
+    type: loc_t
+    description: where player was two moves ago
+- novice:
+    type: bool
+    description: asked for instructions at start-up?
+- numdie:
+    type: turn_t
+    description: number of times killed so far
+- trnluz:
+    type: turn_t
+    description: \# points lost so far due to turns used
+- turns:
+    type: turn_t
+    description: counts commands given (ignores yes/no)
+- oldobj:
+    type: obj_t
+    description: last object player handled
+- saved:
+    type: long
+    description: point penalty for saves
+- tally:
+    type: long
+    description: count of treasures gained
+- thresh:
+    type: long
+    description: current threshold for endgame scoring tier
+- wzdark:
+    type: bool
+    description: whether the loc he's leaving was dark
+- blooded:
+    type: bool
+    description: has player drunk of dragon's blood?
+- zzword:
+    range: '[TOKLEN + 1]'
+    type: char 
+    description: randomly generated magic word from bird
+- abbrev:
+    range: '[NLOCATIONS + 1]'
+    type: long
+    description: has location been seen?
+- atloc:
+    range: '[NLOCATIONS + 1]'
+    type: long 
+    description: head of object linked list per location
+- dseen:
+    range: '[NDWARVES + 1]'
+    type: long
+    description: true if dwarf has seen him
+- dloc:
+    range: '[NDWARVES + 1]'
+    type: loc_t 
+    description: location of dwarves, initially hard-wired in
+- odloc:
+    range: '[NDWARVES + 1]'
+    type: loc_t 
+    description: prior loc of each dwarf, initially garbage
+- fixed:
+    range: '[NOBJECTS + 1]'
+    type: loc_t 
+    description: fixed location of object (if  not IS_FREE)
+- link:
+    range: '[NOBJECTS * 2 + 1]'
+    type: long 
+    description: object-list links
+- place:
+    range: '[NOBJECTS + 1]'
+    type: loc_t 
+    description: location of object
+- hinted:
+    range: '[NHINTS]'
+    type: long 
+    description: hinted[i] = true iff hint i has been used.
+- hintlc:
+    range: '[NHINTS]'
+    type: long 
+    description: hintlc[i] = how long at LOC with cond bit i
+- prop:
+    range: '[NOBJECTS + 1]'
+    type: long 
+    description: object state array */
+
 motions: !!omap
 - MOT_0:
     words: !!null

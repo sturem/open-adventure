@@ -6,8 +6,8 @@
 #include "dungeon.h"
 
 #define LINESIZE       1024
-#define TOKLEN         5          // № sigificant characters in a token */
-#define NDWARVES       6          // number of dwarves
+//#define TOKLEN         5          // № sigificant characters in a token
+//#define NDWARVES       6          // number of dwarves
 #define PIRATE         NDWARVES   // must be NDWARVES-1 when zero-origin
 #define DALTLC         LOC_NUGGET // alternate dwarf location
 #define INVLIMIT       7          // inverntory limit (№ of objects)
@@ -89,7 +89,7 @@ enum speechpart {unknown, intransitive, transitive};
 
 enum wordtype {NO_WORD_TYPE, MOTION, OBJECT, ACTION, NUMERIC};
 
-typedef enum scorebonus {none, splatter, defeat, victory} score_t;
+//typedef enum scorebonus {none, splatter, defeat, victory} score_t;
 
 /* Phase codes for action returns.
  * These were at one time FORTRAN line numbers.
@@ -109,11 +109,12 @@ enum phase_codes {
     GO_DWARFWAKE,
 };
 
-typedef long vocab_t;  // index into a vocabulary array */
-typedef long verb_t;   // index into an actions array */
-typedef long obj_t;    // index into the object array */
-typedef long loc_t;    // index into the locations array */
-typedef long turn_t;   // turn counter or threshold */
+typedef long vocab_t;  // index into a vocabulary array
+typedef long verb_t;   // index into an actions array
+/*
+typedef long obj_t;    // index into the object array
+typedef long loc_t;    // index into the locations array
+typedef long turn_t;   // turn counter or threshold
 
 struct game_t {
     unsigned long lcg_a, lcg_c, lcg_m, lcg_x;
@@ -134,7 +135,7 @@ struct game_t {
      *	1	Reached Hall Of Mists, but hasn't met first dwarf
      *	2	Met first dwarf, others start moving, no knives thrown yet
      *	3	A knife has been thrown (first set always misses)
-     *	3+	Dwarves are mad (increases their accuracy) */
+     *	3+	Dwarves are mad (increases their accuracy) * /
     long dflag;
 
     long dkill;                  // dwarves killed
@@ -173,9 +174,9 @@ struct game_t {
     loc_t place[NOBJECTS + 1];   // location of object
     long hinted[NHINTS];         // hinted[i] = true iff hint i has been used.
     long hintlc[NHINTS];         // hintlc[i] = how long at LOC with cond bit i
-    long prop[NOBJECTS + 1];     // object state array */
+    long prop[NOBJECTS + 1];     // object state array 
 };
-
+*/
 /*
  * Game application settings - settings, but not state of the game, per se.
  * This data is not saved in a saved game.

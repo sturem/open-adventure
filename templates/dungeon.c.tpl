@@ -48,4 +48,14 @@ const travelop_t travel[] = {{
 
 const char *ignore = "{ignore}";
 
+const char* get_dungeon_prop(const char *prop_name)
+{{
+    {getter}
+    
+    return false;
+}}
+bool set_dungeon_prop(const char *prop_name, const char *prop_value)
+{{
+    
+}}
 /* end */

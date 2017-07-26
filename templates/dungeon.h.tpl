@@ -29,6 +29,12 @@
 #define COND_HOGRE	19	/* Trying to deal with ogre */
 #define COND_HJADE	20	/* Found all treasures except jade */
 
+typedef long obj_t;    // index into the object array */
+typedef long loc_t;    // index into the locations array */
+typedef long turn_t;   // turn counter or threshold */
+
+typedef enum scorebonus {{none, splatter, defeat, victory}} score_t;
+
 typedef struct {{
   const char** strs;
   const int n;
@@ -135,8 +141,14 @@ extern const char *ignore;
 #define NACTIONS  	{num_actions}
 #define NTRAVEL		{num_travel}
 #define NKEYS		{num_keys}
+#define NDWARVES    6          // number of dwarves
+#define TOKLEN      5          // No. sigificant characters in a token
 
 #define BIRD_ENDSTATE {bird_endstate}
+
+struct game_t{{
+{game_state_members}
+}};
 
 enum arbitrary_messages_refs {{
 {arbitrary_messages}
