@@ -480,6 +480,26 @@ static void croak(void)
     }
 }
 
+static void describe_location(void) {
+    const char* msg = locations[game.loc].description.small;
+    if (MOD(game.abbrev[game.loc], game.abbnum) == 0 ||
+        msg == NO_MESSAGE)
+        msg = locations[game.loc].description.big;
+
+    if (!FORCED(game.loc) && DARK(game.loc)) {
+        msg = arbitrary_messages[PITCH_DARK];
+    }
+
+    if (TOTING(BEAR))
+        rspeak(TAME_BEAR);
+
+    speak(msg);
+    
+    if (game.loc == LOC_Y2 && PCT(25) && !game.closng) // FIXME: magic number
+        rspeak(SAYS_PLUGH);
+}
+
+
 static bool traveleq(int a, int b)
 /* Are two travel entries equal for purposes of skip after failed condition? */
 {
@@ -965,6 +985,7 @@ void clear_command(command_t *cmd)
     cmd->verb = ACT_NULL;
     game.oldobj = cmd->obj;
     cmd->obj = NO_OBJECT;
+    cmd->state = EMPTY;
 }
 
 void close_cleanup_before_command(void) 
@@ -1045,7 +1066,7 @@ bool preprocess_command(command_t *command)
                 command->word[0].type = ACTION;
             }
         }
-
+        command->state = PREPROCESSED;
         return true;
     }
     return false;
@@ -1055,8 +1076,7 @@ static bool do_command()
 /* Get and execute a command */
 {
     static command_t command;
-    bool command_given = false;
-    bool command_executed = false;
+    command.state = EMPTY;
 
     /*  Can't leave cave once it's closing (except by main office). */
     if (OUTSID(game.newloc) && game.newloc != 0 && game.closng) {
@@ -1085,76 +1105,72 @@ static bool do_command()
     if (!dwarfmove())
         croak();
 
-    /*  Describe the current location and (maybe) get next command. */
-    for (;;) {
-        if (game.loc == 0)
-            croak();
-        const char* msg = locations[game.loc].description.small;
-        if (MOD(game.abbrev[game.loc], game.abbnum) == 0 ||
-            msg == 0)
-            msg = locations[game.loc].description.big;
-        if (!FORCED(game.loc) && DARK(game.loc)) {
-            /*  The easiest way to get killed is to fall into a pit in
-             *  pitch darkness. */
-            if (game.wzdark && PCT(35)) {
-                rspeak(PIT_FALL);
-                game.oldlc2 = game.loc;
-                croak();
-                continue;	/* back to top of main interpreter loop */
-            }
-            msg = arbitrary_messages[PITCH_DARK];
-        }
-        if (TOTING(BEAR))
-            rspeak(TAME_BEAR);
-        speak(msg);
+    if (game.loc == LOC_NOWHERE) {
+        croak();
+    }
+
+    /* The easiest way to get killed is to fall into a pit in
+     * pitch darkness. */
+    if (!FORCED(game.loc) && DARK(game.loc) && game.wzdark && PCT(35)) { // FIXME: magic number
+        rspeak(PIT_FALL);
+        game.oldlc2 = game.loc;
+        croak();
+        return true;
+    }
+
+    /* Describe the current location and (maybe) get next command. */
+    while (command.state != EXECUTED) {
+        describe_location();
+
         if (FORCED(game.loc)) {
             playermove(HERE);
             return true;
         }
-        if (game.loc == LOC_Y2 && PCT(25) && !game.closng)
-            rspeak(SAYS_PLUGH);
 
         listobjects();
-        clear_command(&command);
 
-        // Keep getting commands from user until valid command is both given and executed.
-        do {
-            // Check some quick-time game state items, get input from user, increment turn, 
-            // and pre-process commands. Keep going until pre-processing is done.
-            do {
+        /* Command not yet given; keep getting commands from user  
+         * until valid command is both given and executed. */
+        clear_command(&command);
+        while (command.state <= GIVEN) {
+            /* Check to see if the room is dark. If the knife is here, 
+             * and it's dark, the knife permanently disappears */
+            game.wzdark = DARK(game.loc);
+            if (game.knfloc != LOC_NOWHERE && game.knfloc != game.loc)
+                game.knfloc = LOC_NOWHERE;
+
+            /* Check some quick-time game state items, get input from 
+             * user, increment turn, and pre-process commands. Keep 
+             * going until pre-processing is done. */
+            while ( command.state < PREPROCESSED ) {
                 checkhints();
+
                 close_cleanup_before_command();
 
-                game.wzdark = DARK(game.loc);
-                if (game.knfloc > 0 && game.knfloc != game.loc)
-                    game.knfloc = 0;
-
-                // Get command input from user
+                /* Get command input from user */
                 if (!get_command_input(&command))
                     return false;
 
                 ++game.turns;
-            } while ( !preprocess_command(&command));
-            command_given = true;
+                preprocess_command(&command);
+            }
 
-            // check if game is closed
+            /* check if game is closed, and exit if it is */
             if (closecheck() ) 
                 return true;
 
-           // loop until all words in command are procesed
-            do {
-                // assume all words in command are processed, until proven otherwise
-                command_executed = true;
+            /* loop until all words in command are procesed */
+            while (command.state == PREPROCESSED ) {
+                command.state = PROCESSING;
 
                 if (command.word[0].id == WORD_NOT_FOUND) {
                     /* Gee, I don't understand. */
                     sspeak(DONT_KNOW, command.word[0].raw);
                     clear_command(&command);
-                    command_given = false;
                     continue;
                 }
 
-                // Give user hints of shortcuts
+                /* Give user hints of shortcuts */
                 if (strncasecmp(command.word[0].raw, "west", sizeof("west")) == 0) {
                     if (++game.iwest == 10)
                         rspeak(W_IS_WEST);
@@ -1168,7 +1184,8 @@ static bool do_command()
                 case NO_WORD_TYPE: // FIXME: treating NO_WORD_TYPE as a motion word is confusing
                 case MOTION:
                     playermove(command.word[0].id);
-                    return true;
+                    command.state = EXECUTED;
+                    continue;
                 case OBJECT:
                     command.part = unknown;
                     command.obj = command.word[0].id;
@@ -1184,7 +1201,6 @@ static bool do_command()
                     if (!settings.oldstyle) {
                         sspeak(DONT_KNOW, command.word[0].raw);
                         clear_command(&command);
-                        command_given = false;
                         continue;
                     }
                     break;
@@ -1194,17 +1210,11 @@ static bool do_command()
 
                 switch (action(command)) {
                 case GO_TERMINATE:
-                    return true;
+                    command.state = EXECUTED;
+                    break;
                 case GO_MOVE:
                     playermove(NUL);
-                    return true;
-                case GO_TOP:
-                    continue;    /* back to top of main interpreter loop */
-                case GO_CLEAROBJ:
-                    clear_command(&command);
-                /* FALL THROUGH */
-                case GO_CHECKHINT:
-                    command_given = false;
+                    command.state = EXECUTED;
                     break;
                 case GO_WORD2:
 #ifdef GDEBUG
@@ -1213,26 +1223,39 @@ static bool do_command()
                     /* Get second word for analysis. */
                     command.word[0] = command.word[1];
                     command.word[1] = empty_command_word;
-                    command_executed = false;
+                    command.state = PREPROCESSED;
                     break;
                 case GO_UNKNOWN:
                     /*  Random intransitive verbs come here.  Clear obj just in case
                      *  (see attack()). */
                     command.word[0].raw[0] = toupper(command.word[0].raw[0]);
                     sspeak(DO_WHAT, command.word[0].raw);
-                    command.obj = 0;
-                    command_given = false;
+                    command.obj = NO_OBJECT;
+
+                    // object cleared; we need to go back to the preprocessing step
+                    command.state = GIVEN;
                     break;
                 case GO_DWARFWAKE:
                     /*  Oh dear, he's disturbed the dwarves. */
                     rspeak(DWARVES_AWAKEN);
                     terminate(endgame);
+                case GO_CLEAROBJ: // FIXME: re-name to be more contextual; this was previously a label
+                    clear_command(&command);
+                    break;
+                case GO_TOP: // FIXME: re-name to be more contextual; this was previously a label
+                    break;
+                case GO_CHECKHINT: // FIXME: re-name to be more contextual; this was previously a label
+                    command.state = GIVEN;
+                    break;
                 default: // LCOV_EXCL_LINE
                     BUG(ACTION_RETURNED_PHASE_CODE_BEYOND_END_OF_SWITCH); // LCOV_EXCL_LINE
                 }
-            } while (!command_executed);
-        } while (!command_given);
+            }
+        }
     }
+
+    /* command completely executed; we return true. */
+    return true;
 }
 
 /* end */
