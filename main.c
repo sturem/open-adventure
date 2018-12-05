@@ -983,25 +983,10 @@ static void listobjects(void)
 void clear_command(command_t *cmd)
 {
     cmd->verb = ACT_NULL;
+    cmd->part = unknown;
     game.oldobj = cmd->obj;
     cmd->obj = NO_OBJECT;
     cmd->state = EMPTY;
-}
-
-void close_cleanup_before_command(void) 
-/*  If closing time, check for any objects being toted with
- *  game.prop < 0 and stash them.  This way objects won't be
- *  described until they've been picked up and put down
- *  separate from their respective piles. */
-{
-    if (game.closed) {
-        if (game.prop[OYSTER] < 0 && TOTING(OYSTER))
-            pspeak(OYSTER, look, true, 1);
-        for (size_t i = 1; i <= NOBJECTS; i++) {
-            if (TOTING(i) && game.prop[i] < 0)
-                game.prop[i] = STASHED(i);
-        }
-    }
 }
 
 bool preprocess_command(command_t *command) 
@@ -1133,19 +1118,31 @@ static bool do_command()
          * until valid command is both given and executed. */
         clear_command(&command);
         while (command.state <= GIVEN) {
+
+            if (game.closed) {
+            /*  If closing time, check for any objects being toted with
+             *  game.prop < 0 and stash them.  This way objects won't be
+             *  described until they've been picked up and put down
+             *  separate from their respective piles. */
+                if (game.prop[OYSTER] < 0 && TOTING(OYSTER))
+                    pspeak(OYSTER, look, true, 1);
+                for (size_t i = 1; i <= NOBJECTS; i++) {
+                    if (TOTING(i) && game.prop[i] < 0)
+                        game.prop[i] = STASHED(i);
+                }
+            }
+
             /* Check to see if the room is dark. If the knife is here, 
              * and it's dark, the knife permanently disappears */
             game.wzdark = DARK(game.loc);
             if (game.knfloc != LOC_NOWHERE && game.knfloc != game.loc)
                 game.knfloc = LOC_NOWHERE;
 
-            /* Check some quick-time game state items, get input from 
-             * user, increment turn, and pre-process commands. Keep 
-             * going until pre-processing is done. */
+            /* Check some for hints, get input from user, increment
+             * turn, and pre-process commands. Keep going until
+             * pre-processing is done. */
             while ( command.state < PREPROCESSED ) {
                 checkhints();
-
-                close_cleanup_before_command();
 
                 /* Get command input from user */
                 if (!get_command_input(&command))
