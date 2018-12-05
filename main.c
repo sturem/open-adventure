@@ -517,7 +517,7 @@ static bool traveleq(int a, int b)
  *  does, game.newloc will be limbo, and game.oldloc will be what killed
  *  him, so we need game.oldlc2, which is the last place he was
  *  safe.) */
-static void playermove( int motion)
+static void playermove(int motion)
 {
     int scratchloc, travel_entry = tkey[game.loc];
     game.newloc = game.loc;
@@ -1232,7 +1232,7 @@ static bool do_command()
                     sspeak(DO_WHAT, command.word[0].raw);
                     command.obj = NO_OBJECT;
 
-                    // object cleared; we need to go back to the preprocessing step
+                    /* object cleared; we need to go back to the preprocessing step */
                     command.state = GIVEN;
                     break;
                 case GO_DWARFWAKE:
@@ -1250,9 +1250,9 @@ static bool do_command()
                 default: // LCOV_EXCL_LINE
                     BUG(ACTION_RETURNED_PHASE_CODE_BEYOND_END_OF_SWITCH); // LCOV_EXCL_LINE
                 }
-            }
-        }
-    }
+            } /* while command has nob been fully processed */
+        } /* while command is not yet given */
+    } /* while command is not executed */
 
     /* command completely executed; we return true. */
     return true;
